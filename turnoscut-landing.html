@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TurnosCut — Sistema para Barberías</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --off-black: #111114;
+    --card: #18181c;
+    --border: #2a2a30;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dim: #7a6230;
+    --white: #f5f2ed;
+    --muted: #888;
+    --red: #e03434;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--black);
+    color: var(--white);
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 6vw;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.7rem; letter-spacing: 0.08em; color: var(--gold); }
+  .logo span { color: var(--white); }
+  .nav-cta {
+    background: var(--gold); color: var(--black); font-weight: 600;
+    padding: 9px 22px; border-radius: 6px; text-decoration: none;
+    font-size: 0.85rem; letter-spacing: 0.03em; transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--gold-light); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    padding: 120px 6vw 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.13) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(201,168,76,0.1); border: 1px solid var(--gold-dim);
+    color: var(--gold); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.1em;
+    padding: 6px 16px; border-radius: 100px; margin-bottom: 28px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.5rem, 10vw, 8rem);
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    margin-bottom: 24px;
+  }
+  .hero h1 .accent { color: var(--gold); }
+  .hero p {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+    color: #bbb;
+    max-width: 560px;
+    line-height: 1.65;
+    margin-bottom: 44px;
+  }
+  .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .btn-primary {
+    background: var(--gold); color: var(--black);
+    font-weight: 700; font-size: 1rem;
+    padding: 15px 36px; border-radius: 8px; text-decoration: none;
+    transition: transform 0.15s, background 0.2s;
+    box-shadow: 0 4px 32px rgba(201,168,76,0.3);
+  }
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); }
+  .btn-secondary {
+    background: transparent; color: var(--white);
+    font-weight: 500; font-size: 1rem;
+    padding: 15px 36px; border-radius: 8px; text-decoration: none;
+    border: 1px solid var(--border); transition: border-color 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--gold-dim); }
+
+  .hero-social-proof {
+    margin-top: 60px;
+    display: flex; align-items: center; gap: 16px;
+    font-size: 0.82rem; color: var(--muted);
+  }
+  .stars { color: var(--gold); font-size: 1rem; letter-spacing: 2px; }
+
+  /* PAIN SECTION */
+  .pain {
+    background: var(--off-black);
+    padding: 80px 6vw;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .pain h2 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 14px; }
+  .pain p { color: #aaa; max-width: 520px; margin: 0 auto 48px; font-size: 1rem; }
+  .pain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; }
+  .pain-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px 20px; text-align: left;
+  }
+  .pain-icon { font-size: 1.8rem; margin-bottom: 12px; }
+  .pain-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 6px; }
+  .pain-card p { font-size: 0.82rem; color: var(--muted); line-height: 1.55; }
+
+  /* FEATURES */
+  .features { padding: 100px 6vw; max-width: 1100px; margin: 0 auto; }
+  .section-label {
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.15em;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 12px;
+  }
+  .features h2 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.2rem, 5vw, 4rem); margin-bottom: 56px; }
+  .feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+  .feat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 32px 28px;
+    transition: border-color 0.3s, transform 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .feat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .feat-card:hover { border-color: var(--gold-dim); transform: translateY(-4px); }
+  .feat-card:hover::before { opacity: 1; }
+  .feat-icon { font-size: 2rem; margin-bottom: 16px; }
+  .feat-card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 10px; }
+  .feat-card p { font-size: 0.85rem; color: #aaa; line-height: 1.6; }
+  .feat-tag {
+    display: inline-block; margin-top: 14px;
+    background: rgba(201,168,76,0.1); color: var(--gold);
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em;
+    padding: 4px 10px; border-radius: 4px; text-transform: uppercase;
+  }
+
+  /* PRICING */
+  .pricing { padding: 100px 6vw; background: var(--off-black); border-top: 1px solid var(--border); }
+  .pricing-inner { max-width: 960px; margin: 0 auto; text-align: center; }
+  .pricing h2 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.2rem, 5vw, 4rem); margin-bottom: 12px; }
+  .pricing > .pricing-inner > p { color: #aaa; margin-bottom: 56px; }
+  .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .price-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 36px 28px; text-align: left; position: relative;
+  }
+  .price-card.featured {
+    border-color: var(--gold);
+    box-shadow: 0 0 40px rgba(201,168,76,0.15);
+  }
+  .popular-badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: var(--gold); color: var(--black); font-size: 0.72rem;
+    font-weight: 700; letter-spacing: 0.08em; padding: 4px 16px; border-radius: 100px;
+    white-space: nowrap; text-transform: uppercase;
+  }
+  .price-name { font-size: 0.8rem; font-weight: 600; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+  .price-amount { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--white); line-height: 1; }
+  .price-amount span { font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--muted); }
+  .price-desc { font-size: 0.82rem; color: #aaa; margin: 14px 0 22px; }
+  .price-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .price-features li { font-size: 0.85rem; color: #ccc; display: flex; align-items: center; gap: 10px; }
+  .price-features li::before { content: '✓'; color: var(--gold); font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+  .price-btn {
+    display: block; text-align: center; padding: 13px;
+    border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .price-btn-outline { border: 1px solid var(--border); color: var(--white); }
+  .price-btn-outline:hover { border-color: var(--gold-dim); }
+  .price-btn-solid { background: var(--gold); color: var(--black); }
+  .price-btn-solid:hover { background: var(--gold-light); transform: translateY(-2px); }
+
+  /* TESTIMONIALS */
+  .testimonials { padding: 100px 6vw; max-width: 1000px; margin: 0 auto; }
+  .testimonials h2 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.2rem, 5vw, 4rem); margin-bottom: 48px; }
+  .testi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .testi-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px 24px;
+  }
+  .testi-stars { color: var(--gold); font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 14px; }
+  .testi-text { font-size: 0.88rem; color: #ccc; line-height: 1.65; margin-bottom: 20px; font-style: italic; }
+  .testi-author { display: flex; align-items: center; gap: 12px; }
+  .testi-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.9rem; color: var(--black);
+  }
+  .testi-name { font-size: 0.85rem; font-weight: 600; }
+  .testi-location { font-size: 0.75rem; color: var(--muted); }
+
+  /* CTA FINAL */
+  .cta-final {
+    padding: 100px 6vw;
+    text-align: center;
+    background: var(--off-black);
+    border-top: 1px solid var(--border);
+    position: relative; overflow: hidden;
+  }
+  .cta-final::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 50% 100%, rgba(201,168,76,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta-final h2 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.5rem, 7vw, 6rem); margin-bottom: 16px; }
+  .cta-final p { color: #aaa; font-size: 1rem; max-width: 480px; margin: 0 auto 40px; }
+  .cta-note { margin-top: 20px; font-size: 0.78rem; color: var(--muted); }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 28px 6vw;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+    font-size: 0.78rem; color: var(--muted);
+  }
+  footer .logo { font-size: 1.1rem; }
+
+  /* DIVIDER */
+  .divider { width: 48px; height: 2px; background: var(--gold); margin-bottom: 20px; }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .hero-badge { animation: fadeUp 0.5s ease both; }
+  .hero h1 { animation: fadeUp 0.6s 0.1s ease both; }
+  .hero p { animation: fadeUp 0.6s 0.2s ease both; }
+  .hero-btns { animation: fadeUp 0.6s 0.3s ease both; }
+  .hero-social-proof { animation: fadeUp 0.6s 0.4s ease both; }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 3.2rem; }
+    .hero-btns { flex-direction: column; align-items: center; }
+    .btn-primary, .btn-secondary { width: 100%; text-align: center; }
+    footer { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Turnos<span>Cut</span></div>
+  <a href="#prueba" class="nav-cta">Probalo gratis</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">💈 Sistema N°1 para barberías en Argentina</div>
+  <h1>Tu barbería,<br><span class="accent">siempre llena.</span></h1>
+  <p>Turnos online, control de caja y recordatorios por WhatsApp — todo en un solo sistema. Sin papeles, sin quilombos.</p>
+  <div class="hero-btns">
+    <a href="#prueba" class="btn-primary">Probalo gratis 14 días →</a>
+    <a href="#como-funciona" class="btn-secondary">Ver cómo funciona</a>
+  </div>
+  <div class="hero-social-proof">
+    <span class="stars">★★★★★</span>
+    <span>+200 barberías ya lo usan en todo el país</span>
+  </div>
+</section>
+
+<!-- PAIN -->
+<section class="pain">
+  <h2>¿Te suena esto?</h2>
+  <p>Los problemas de siempre que te hacen perder plata y tiempo todos los días.</p>
+  <div class="pain-grid">
+    <div class="pain-card">
+      <div class="pain-icon">📱</div>
+      <h3>Turnos por WhatsApp</h3>
+      <p>Pasás el día respondiendo mensajes manualmente. Si no contestás rápido, el cliente se va a otra barbería.</p>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">🚫</div>
+      <h3>Ausentes sin aviso</h3>
+      <p>El cliente no se acuerda del turno, no avisa, y perdés ese tiempo de trabajo sin cobrar nada.</p>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">📒</div>
+      <h3>La caja en un cuaderno</h3>
+      <p>No sabés cuánto hiciste en el día hasta que cerrás y contás billetes. Sin registro, sin control.</p>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">😤</div>
+      <h3>Clientes que se pierden</h3>
+      <p>Un cliente viene dos veces y desaparece. No tenés forma de recontactarlo ni de saber cuándo fue la última vez.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="como-funciona">
+  <div class="section-label">Solución</div>
+  <div class="divider"></div>
+  <h2>Todo lo que necesitás,<br>nada que no usás.</h2>
+  <div class="feat-grid">
+    <div class="feat-card">
+      <div class="feat-icon">📅</div>
+      <h3>Turnos online 24/7</h3>
+      <p>Tus clientes reservan desde el celular a cualquier hora, sin que tengas que contestar nada. Vos configurás los horarios y días disponibles.</p>
+      <span class="feat-tag">Sin código</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">💬</div>
+      <h3>Recordatorios por WhatsApp</h3>
+      <p>El sistema manda un mensaje automático 24 hs antes del turno. Los ausentes se reducen hasta un 80%.</p>
+      <span class="feat-tag">Automático</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">💰</div>
+      <h3>Control de caja</h3>
+      <p>Registrá cada ingreso del día. Al cierre ves cuánto hiciste, qué servicios fueron más pedidos y cómo va el mes.</p>
+      <span class="feat-tag">En tiempo real</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">👥</div>
+      <h3>Base de clientes</h3>
+      <p>Guardá el historial de cada cliente: nombre, teléfono, última visita, servicios preferidos. Nunca más perder un cliente.</p>
+      <span class="feat-tag">Simple</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📊</div>
+      <h3>Estadísticas claras</h3>
+      <p>Sabé cuáles son tus horas pico, qué días facturás más y cuántos clientes volvieron. Datos para tomar mejores decisiones.</p>
+      <span class="feat-tag">Visual</span>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">☁️</div>
+      <h3>Desde cualquier lado</h3>
+      <p>Funciona en el celular, tablet o PC. Todo en la nube, sin instalar nada, sin perder datos.</p>
+      <span class="feat-tag">Online</span>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="precios">
+  <div class="pricing-inner">
+    <div class="section-label" style="text-align:center">Precios</div>
+    <h2>Simple y sin sorpresas.</h2>
+    <p>Un solo precio mensual. Cancelás cuando querés. Sin contratos.</p>
+    <div class="price-grid">
+
+      <div class="price-card">
+        <div class="price-name">Básico</div>
+        <div class="price-amount">$8.000<span>/mes</span></div>
+        <div class="price-desc">Para empezar a ordenarse.</div>
+        <ul class="price-features">
+          <li>Turnos online</li>
+          <li>Base de clientes</li>
+          <li>Hasta 2 barberos</li>
+          <li>Soporte por mail</li>
+        </ul>
+        <a href="#prueba" class="price-btn price-btn-outline">Empezar gratis</a>
+      </div>
+
+      <div class="price-card featured">
+        <div class="popular-badge">MÁS ELEGIDO</div>
+        <div class="price-name">Pro</div>
+        <div class="price-amount">$14.000<span>/mes</span></div>
+        <div class="price-desc">La experiencia completa.</div>
+        <ul class="price-features">
+          <li>Todo lo del Básico</li>
+          <li>WhatsApp automático</li>
+          <li>Control de caja</li>
+          <li>Estadísticas</li>
+          <li>Hasta 5 barberos</li>
+          <li>Soporte prioritario</li>
+        </ul>
+        <a href="#prueba" class="price-btn price-btn-solid">Empezar gratis</a>
+      </div>
+
+      <div class="price-card">
+        <div class="price-name">Premium</div>
+        <div class="price-amount">$22.000<span>/mes</span></div>
+        <div class="price-desc">Para barberías grandes.</div>
+        <ul class="price-features">
+          <li>Todo lo del Pro</li>
+          <li>Multi-sede</li>
+          <li>Barberos ilimitados</li>
+          <li>Reportes avanzados</li>
+          <li>WhatsApp dedicado</li>
+          <li>Onboarding personal</li>
+        </ul>
+        <a href="#prueba" class="price-btn price-btn-outline">Empezar gratis</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="section-label">Testimonios</div>
+  <div class="divider"></div>
+  <h2>Lo que dicen los barberos.</h2>
+  <div class="testi-grid">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">"Antes perdía 3 ó 4 turnos por semana porque la gente se olvidaba. Ahora con el recordatorio de WhatsApp casi no tengo ausentes. Cambió todo."</p>
+      <div class="testi-author">
+        <div class="testi-avatar">M</div>
+        <div>
+          <div class="testi-name">Marcos G.</div>
+          <div class="testi-location">Barbería La Vieja Escuela · Rosario</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">"Al fin sé cuánto hago por día sin tener que contar plata al cierre. El control de caja es simple y funciona perfecto desde el celular."</p>
+      <div class="testi-author">
+        <div class="testi-avatar">F</div>
+        <div>
+          <div class="testi-name">Federico R.</div>
+          <div class="testi-location">BarberShop Norte · Córdoba</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">"Mis clientes pueden sacar turno a las 2am si quieren. Yo duermo tranquilo y cuando me levanto ya tengo el día organizado solo."</p>
+      <div class="testi-author">
+        <div class="testi-avatar">D</div>
+        <div>
+          <div class="testi-name">Diego M.</div>
+          <div class="testi-location">Cortez Barbería · Buenos Aires</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final" id="prueba">
+  <h2>14 días gratis.<br><span style="color:var(--gold)">Sin tarjeta.</span></h2>
+  <p>Probá TurnosCut en tu barbería sin riesgo. Si no te sirve, cancelás y listo. Sin preguntas.</p>
+  <a href="mailto:hola@turnoscut.com.ar?subject=Quiero probar TurnosCut" class="btn-primary" style="display:inline-block">
+    Empezar prueba gratis →
+  </a>
+  <div class="cta-note">✓ Sin tarjeta &nbsp;·&nbsp; ✓ Configuración en 5 minutos &nbsp;·&nbsp; ✓ Soporte en español</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="logo">Turnos<span style="color:var(--white)">Cut</span></div>
+  <span>© 2025 TurnosCut · Argentina</span>
+  <span>hola@turnoscut.com.ar</span>
+</footer>
+
+</body>
+</html>

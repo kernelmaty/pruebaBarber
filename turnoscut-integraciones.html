@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TurnosCut — Integraciones</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --black:#09090b;--surface:#111113;--card:#18181c;--card2:#1e1e24;
+  --border:#27272d;--border2:#32323a;
+  --gold:#c9a84c;--gold-l:#e8c97a;--gold-d:#7a6230;--gold-bg:rgba(201,168,76,.08);
+  --white:#f5f2ed;--muted:#71717a;--muted2:#a1a1aa;
+  --red:#ef4444;--red-bg:rgba(239,68,68,.1);
+  --green:#22c55e;--green-bg:rgba(34,197,94,.1);
+  --blue:#3b82f6;--blue-bg:rgba(59,130,246,.1);
+  --amber:#f59e0b;--amber-bg:rgba(245,158,11,.1);
+  --wp:#25D366;--wp-bg:rgba(37,211,102,.08);
+  --mp:#00BCFF;--mp-bg:rgba(0,188,255,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--black);color:var(--white);min-height:100vh}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--surface)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit}
+
+/* LAYOUT */
+.app{display:flex;min-height:100vh}
+.sidebar{
+  width:230px;flex-shrink:0;background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:50;
+}
+.sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.06em;color:var(--gold)}
+.sidebar-logo span{color:var(--white)}
+.nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:1px;overflow-y:auto}
+.nav-section{font-size:.62rem;font-weight:600;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;padding:10px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;font-size:.84rem;font-weight:500;color:var(--muted2);background:none;border:none;width:100%;text-align:left;transition:background .15s,color .15s}
+.nav-item:hover{background:var(--card);color:var(--white)}
+.nav-item.active{background:var(--gold-bg);color:var(--gold)}
+.nav-icon{font-size:.95rem;width:18px;text-align:center;flex-shrink:0}
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-left:auto}
+.dot-green{background:var(--green);animation:pulse 2s infinite}
+.dot-red{background:var(--red)}
+.dot-gray{background:var(--muted)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sidebar-footer{padding:12px 18px;border-top:1px solid var(--border);font-size:.72rem;color:var(--muted)}
+
+.main{margin-left:230px;flex:1;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:40;background:rgba(9,9,11,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:13px 26px;display:flex;align-items:center;justify-content:space-between}
+.topbar-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.05em}
+.content{padding:24px;flex:1}
+
+/* CARDS */
+.integration-hero{
+  border-radius:16px;padding:28px 30px;margin-bottom:22px;
+  display:flex;align-items:center;gap:22px;position:relative;overflow:hidden;
+  border:1px solid var(--border2);
+}
+.integration-hero::before{content:'';position:absolute;inset:0;opacity:.04}
+.hero-wp::before{background:var(--wp)}
+.hero-mp::before{background:var(--mp)}
+.integration-hero-icon{font-size:3rem;flex-shrink:0;z-index:1}
+.integration-hero-info{flex:1;z-index:1}
+.integration-hero-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:.04em;margin-bottom:4px}
+.integration-hero-desc{font-size:.85rem;color:var(--muted2);line-height:1.55;max-width:500px}
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:10px}
+.sb-active{background:var(--green-bg);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.sb-inactive{background:var(--card2);color:var(--muted);border:1px solid var(--border)}
+.sb-mp{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-bottom:18px}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.card-title{font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:8px}
+.card-body{padding:20px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+/* FORM */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:.75rem;font-weight:600;color:var(--muted2);margin-bottom:5px;letter-spacing:.04em}
+.form-label-hint{font-size:.7rem;color:var(--muted);font-weight:400;margin-left:6px}
+.form-input,.form-select,.form-textarea{width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--white);padding:9px 12px;border-radius:7px;font-size:.84rem;outline:none;transition:border-color .2s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--gold)}
+.form-textarea{resize:vertical;min-height:80px;line-height:1.5}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-hint{font-size:.72rem;color:var(--muted);margin-top:5px;line-height:1.45}
+.form-hint a{color:var(--gold);text-decoration:none}
+.form-hint a:hover{text-decoration:underline}
+
+/* BTNS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;font-size:.8rem;font-weight:600;border:none;transition:all .15s;cursor:pointer}
+.btn-gold{background:var(--gold);color:var(--black)}
+.btn-gold:hover{background:var(--gold-l);transform:translateY(-1px)}
+.btn-outline{background:transparent;color:var(--white);border:1px solid var(--border2)}
+.btn-outline:hover{border-color:var(--gold-d);color:var(--gold)}
+.btn-green{background:var(--green-bg);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.btn-green:hover{background:rgba(34,197,94,.2)}
+.btn-red{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.btn-wp{background:var(--wp);color:#fff}
+.btn-wp:hover{background:#1da851}
+.btn-mp{background:var(--mp);color:#000;font-weight:700}
+.btn-mp:hover{background:#33c9ff}
+.btn-sm{padding:5px 12px;font-size:.73rem}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+
+/* LOG TABLE */
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{padding:9px 13px;text-align:left;font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);background:var(--surface)}
+td{padding:10px 13px;border-bottom:1px solid var(--border);color:var(--muted2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--card2)}
+.table-wrap{overflow-x:auto}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:600}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.badge-amber{background:var(--amber-bg);color:var(--amber)}
+.badge-muted{background:var(--card2);color:var(--muted2)}
+.badge-blue{background:var(--blue-bg);color:var(--blue)}
+
+/* PRICING CARDS */
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+.price-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:22px 18px;text-align:center;position:relative;transition:border-color .2s,transform .2s}
+.price-card:hover{transform:translateY(-3px);border-color:var(--border2)}
+.price-card.featured{border-color:var(--gold);box-shadow:0 0 30px rgba(201,168,76,.12)}
+.price-popular{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--black);font-size:.65rem;font-weight:700;padding:3px 12px;border-radius:100px;white-space:nowrap;letter-spacing:.06em;text-transform:uppercase}
+.price-name{font-size:.72rem;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.price-amount{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;line-height:1;color:var(--white);margin-bottom:4px}
+.price-amount small{font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--muted)}
+.price-features{list-style:none;margin:14px 0 18px;display:flex;flex-direction:column;gap:7px;text-align:left}
+.price-features li{font-size:.78rem;color:var(--muted2);display:flex;align-items:center;gap:7px}
+.price-features li::before{content:'✓';color:var(--gold);font-weight:700;font-size:.8rem;flex-shrink:0}
+
+/* PASOS */
+.step-list{display:flex;flex-direction:column;gap:14px}
+.step{display:flex;gap:14px;align-items:flex-start}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--black);font-weight:700;font-size:.78rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-body{}
+.step-title{font-weight:600;font-size:.88rem;color:var(--white);margin-bottom:3px}
+.step-desc{font-size:.78rem;color:var(--muted2);line-height:1.55}
+.step-desc a{color:var(--gold);text-decoration:none}
+.step-desc code{background:var(--card2);padding:2px 6px;border-radius:4px;font-size:.75rem;color:var(--gold-l)}
+
+/* PREVIEW WP */
+.wp-preview{background:#0a1929;border-radius:12px;padding:18px;margin-top:12px;font-family:'DM Sans',sans-serif}
+.wp-preview-label{font-size:.7rem;color:var(--muted);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase}
+.wp-bubble{background:#1f4a2e;border-radius:12px 12px 12px 0;padding:12px 14px;max-width:320px;font-size:.82rem;line-height:1.6;color:#e8f5e9;position:relative}
+.wp-bubble-time{font-size:.65rem;color:rgba(255,255,255,.4);text-align:right;margin-top:6px}
+.wp-bubble b{color:#a5d6a7}
+
+/* STAT MINI */
+.stat-mini{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.stat-mini-label{font-size:.72rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.stat-mini-val{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(5px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;animation:modalIn .2s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:none}}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-weight:700;font-size:.95rem}
+.modal-body{padding:22px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:9px;justify-content:flex-end}
+
+/* NOTIF */
+.notification{position:fixed;bottom:22px;right:22px;z-index:500;background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:13px 16px;max-width:320px;display:flex;align-items:center;gap:9px;animation:slideUp .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeIn .3s ease both}
+
+.empty{text-align:center;padding:36px 20px;color:var(--muted)}
+.empty-icon{font-size:2rem;margin-bottom:8px;opacity:.35}
+
+@media(max-width:800px){
+  .sidebar{transform:translateX(-100%)}
+  .main{margin-left:0}
+  .grid-2,.grid-3,.price-grid{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+// ── UTILS ──────────────────────────────────────────────────
+const fmt = n => new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:0}).format(n||0);
+const today = () => new Date().toISOString().split('T')[0];
+const now   = () => new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+
+// Reemplazá las variables del mensaje WhatsApp
+const compilarMensaje = (template, vars) =>
+  Object.entries(vars).reduce((msg,[k,v]) => msg.replace(new RegExp(`{${k}}`,'g'), v), template);
+
+// ── SUPABASE (auto-conecta con credenciales guardadas) ─────
+let sb = null;
+const getSB = () => {
+  if (sb) return sb;
+  const u = localStorage.getItem('tc_url');
+  const k = localStorage.getItem('tc_key');
+  if (u && k) sb = window.supabase.createClient(u, k);
+  return sb;
+};
+
+// ── NOTIFICACIÓN ───────────────────────────────────────────
+function Notif({ msg, type, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, []);
+  const icons = { success:'✅', error:'❌', info:'ℹ️', wp:'💬', mp:'💳' };
+  return (
+    <div className="notification">
+      <span style={{fontSize:'1.1rem'}}>{icons[type]||'💬'}</span>
+      <span style={{fontSize:'.83rem',flex:1,color:'var(--white)'}}>{msg}</span>
+      <button style={{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:'.9rem'}} onClick={onClose}>✕</button>
+    </div>
+  );
+}
+
+// ── MODAL ──────────────────────────────────────────────────
+function Modal({ title, onClose, children, footer }) {
+  return (
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal">
+        <div className="modal-header">
+          <span className="modal-title">{title}</span>
+          <button style={{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:'1rem'}} onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">{children}</div>
+        {footer && <div className="modal-footer">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+//  MÓDULO WHATSAPP
+// ══════════════════════════════════════════════════════════
+function WhatsAppModule({ empresa, notify }) {
+  const client = getSB();
+  const [config, setConfig]   = useState(null);
+  const [logs, setLogs]       = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving]   = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [modalManual, setModalManual] = useState(false);
+  const [manualTel, setManualTel]     = useState('');
+  const [manualMsg, setManualMsg]     = useState('');
+
+  // Formulario de configuración
+  const [form, setForm] = useState({
+    zapi_instance_id: '', zapi_token: '', zapi_client_token: '',
+    wp_recordatorio_hs: 24,
+    wp_recordatorio_activo: false, wp_confirmacion_activo: false,
+    wp_msg_confirmacion: '¡Hola {cliente}! ✂️ Tu turno en *{barberia}* está confirmado para el *{fecha}* a las *{hora}*. ¡Te esperamos!',
+    wp_msg_recordatorio: '🔔 Hola {cliente}, te recordamos que mañana tenés turno en *{barberia}* a las *{hora}*. Si no podés venir, avisanos. ¡Gracias!',
+    wp_msg_cancelacion:  'Hola {cliente}, tu turno del {fecha} a las {hora} en *{barberia}* fue cancelado. Escribinos para reprogramar.',
+  });
+
+  const load = useCallback(async () => {
+    if (!client || !empresa) return;
+    const [cfg, lg] = await Promise.all([
+      client.from('configuracion_empresa').select('*').eq('empresa_id', empresa.id).single(),
+      client.from('whatsapp_logs').select('*,clientes(nombre)').eq('empresa_id', empresa.id).order('enviado_en',{ascending:false}).limit(20),
+    ]);
+    if (cfg.data) { setConfig(cfg.data); setForm(f=>({...f,...cfg.data})); }
+    setLogs(lg.data||[]); setLoading(false);
+  }, [client, empresa]);
+
+  useEffect(() => { load(); }, [load]);
+
+  // ── Guardar configuración en Supabase
+  const guardar = async () => {
+    setSaving(true);
+    const data = { empresa_id: empresa?.id, ...form };
+    const { error } = config
+      ? await client.from('configuracion_empresa').update(data).eq('empresa_id', empresa.id)
+      : await client.from('configuracion_empresa').insert(data);
+    if (error) { notify('Error al guardar: '+error.message, 'error'); }
+    else { notify('Configuración guardada ✅', 'wp'); load(); }
+    setSaving(false);
+  };
+
+  // ── Enviar mensaje de prueba vía Z-API
+  const testConexion = async () => {
+    if (!form.zapi_instance_id || !form.zapi_token) {
+      notify('Completá Instance ID y Token primero', 'error'); return;
+    }
+    setTesting(true);
+    try {
+      // Z-API endpoint de status de instancia
+      const res = await fetch(
+        `https://api.z-api.io/instances/${form.zapi_instance_id}/token/${form.zapi_token}/status`,
+        { headers: { 'Client-Token': form.zapi_client_token || '' } }
+      );
+      const data = await res.json();
+      if (data.connected) notify('✅ WhatsApp conectado correctamente', 'wp');
+      else notify('⚠️ WhatsApp no conectado — escaneá el QR en Z-API', 'error');
+    } catch(e) {
+      notify('No se pudo conectar con Z-API. Verificá las credenciales.', 'error');
+    }
+    setTesting(false);
+  };
+
+  // ── Enviar mensaje manual
+  const enviarManual = async () => {
+    if (!manualTel || !manualMsg) { notify('Completá teléfono y mensaje', 'error'); return; }
+    if (!form.zapi_instance_id || !form.zapi_token) { notify('Configurá Z-API primero', 'error'); return; }
+
+    const tel = '54' + manualTel.replace(/\D/g,''); // formato Argentina
+    try {
+      const res = await fetch(
+        `https://api.z-api.io/instances/${form.zapi_instance_id}/token/${form.zapi_token}/send-text`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json', 'Client-Token': form.zapi_client_token||'' },
+          body: JSON.stringify({ phone: tel, message: manualMsg })
+        }
+      );
+      const data = await res.json();
+      if (data.zaapId || data.messageId) {
+        // Registrar en Supabase
+        await client.from('whatsapp_logs').insert({
+          empresa_id: empresa.id, telefono: tel, tipo: 'manual',
+          mensaje: manualMsg, estado: 'enviado', zapi_msg_id: data.zaapId||data.messageId
+        });
+        notify('Mensaje enviado ✅', 'wp'); setModalManual(false); setManualTel(''); setManualMsg(''); load();
+      } else {
+        notify('Error al enviar: '+JSON.stringify(data), 'error');
+        await client.from('whatsapp_logs').insert({ empresa_id:empresa.id, telefono:tel, tipo:'manual', mensaje:manualMsg, estado:'error', error_detail:JSON.stringify(data) });
+      }
+    } catch(e) {
+      notify('Error de red: '+e.message, 'error');
+    }
+  };
+
+  // ── Preview del mensaje
+  const previewMsg = (template) => compilarMensaje(template, {
+    cliente: 'Juan García', barberia: empresa?.nombre || 'Tu Barbería',
+    fecha: '17/04/2025', hora: '10:00'
+  });
+
+  const zapiOK = form.zapi_instance_id && form.zapi_token;
+
+  return (
+    <div className="fade-in">
+      {/* Hero */}
+      <div className="integration-hero hero-wp" style={{background:'linear-gradient(135deg,#0a1f13,#0f2b1a)'}}>
+        <div className="integration-hero-icon">💬</div>
+        <div className="integration-hero-info">
+          <div className="integration-hero-title" style={{color:'var(--wp)'}}>WhatsApp Automático</div>
+          <div className="integration-hero-desc">Recordatorios, confirmaciones y cancelaciones se envían solos. Reducí los ausentes hasta un 80%.</div>
+          <div className={`status-badge ${zapiOK ? 'sb-active' : 'sb-inactive'}`}>
+            <span style={{width:6,height:6,borderRadius:'50%',background:zapiOK?'var(--green)':'var(--muted)',display:'inline-block'}}/>
+            {zapiOK ? 'Conectado · Z-API' : 'Sin configurar'}
+          </div>
+        </div>
+        <button className="btn btn-wp" onClick={()=>setModalManual(true)} disabled={!zapiOK}>
+          📤 Enviar mensaje
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid-3" style={{marginBottom:20}}>
+        <div className="stat-mini"><div className="stat-mini-label">Enviados hoy</div><div className="stat-mini-val">{logs.filter(l=>l.enviado_en?.startsWith(today())).length}</div></div>
+        <div className="stat-mini"><div className="stat-mini-label">Total enviados</div><div className="stat-mini-val">{logs.filter(l=>l.estado==='enviado').length}</div></div>
+        <div className="stat-mini"><div className="stat-mini-label">Con error</div><div className="stat-mini-val" style={{color:'var(--red)'}}>{logs.filter(l=>l.estado==='error').length}</div></div>
+      </div>
+
+      <div className="grid-2">
+        {/* CONFIG */}
+        <div>
+          {/* Z-API Setup */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">🔑 Credenciales Z-API</span>
+              <button className="btn btn-outline btn-sm" onClick={testConexion} disabled={testing}>
+                {testing ? '⏳ Probando...' : '🔌 Probar conexión'}
+              </button>
+            </div>
+            <div className="card-body">
+              <div className="step-list" style={{marginBottom:18}}>
+                <div className="step">
+                  <div className="step-num">1</div>
+                  <div className="step-body"><div className="step-title">Crear cuenta en Z-API</div><div className="step-desc">Entrá a <a href="https://z-api.io" target="_blank">z-api.io</a> → Crear instancia → Escaneá el QR con tu WhatsApp.</div></div>
+                </div>
+                <div className="step">
+                  <div className="step-num">2</div>
+                  <div className="step-body"><div className="step-title">Copiar credenciales</div><div className="step-desc">Panel Z-API → tu instancia → copiá <code>Instance ID</code>, <code>Token</code> y <code>Client-Token</code>.</div></div>
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Instance ID</label>
+                <input className="form-input" value={form.zapi_instance_id} onChange={e=>setForm({...form,zapi_instance_id:e.target.value})} placeholder="3A3A..." />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Token</label>
+                <input className="form-input" type="password" value={form.zapi_token} onChange={e=>setForm({...form,zapi_token:e.target.value})} placeholder="F4D..." />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Client-Token <span className="form-label-hint">(security header)</span></label>
+                <input className="form-input" type="password" value={form.zapi_client_token} onChange={e=>setForm({...form,zapi_client_token:e.target.value})} placeholder="F..." />
+              </div>
+            </div>
+          </div>
+
+          {/* Automatización */}
+          <div className="card">
+            <div className="card-header"><span className="card-title">⚙️ Automatización</span></div>
+            <div className="card-body">
+              <div style={{display:'flex',flexDirection:'column',gap:14}}>
+                {[
+                  { key:'wp_confirmacion_activo', label:'Confirmación de turno', desc:'Se envía automáticamente cuando se crea un turno nuevo.' },
+                  { key:'wp_recordatorio_activo',  label:'Recordatorio de turno', desc:'Se envía X horas antes del turno.' },
+                ].map(item=>(
+                  <div key={item.key} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'14px 0',borderBottom:'1px solid var(--border)'}}>
+                    <div onClick={()=>setForm({...form,[item.key]:!form[item.key]})} style={{
+                      width:36,height:20,borderRadius:10,cursor:'pointer',transition:'background .2s',flexShrink:0,
+                      background:form[item.key]?'var(--green)':'var(--border2)',position:'relative',marginTop:2
+                    }}>
+                      <div style={{
+                        position:'absolute',top:2,left:form[item.key]?18:2,width:16,height:16,
+                        borderRadius:'50%',background:'#fff',transition:'left .2s'
+                      }}/>
+                    </div>
+                    <div>
+                      <div style={{fontWeight:600,fontSize:'.85rem',color:'var(--white)',marginBottom:3}}>{item.label}</div>
+                      <div style={{fontSize:'.75rem',color:'var(--muted)'}}>{item.desc}</div>
+                    </div>
+                  </div>
+                ))}
+                <div className="form-group" style={{marginBottom:0}}>
+                  <label className="form-label">Horas antes del recordatorio</label>
+                  <input type="number" className="form-input" value={form.wp_recordatorio_hs} onChange={e=>setForm({...form,wp_recordatorio_hs:parseInt(e.target.value)||24})} min={1} max={72} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* MENSAJES */}
+        <div>
+          <div className="card">
+            <div className="card-header"><span className="card-title">✍️ Mensajes</span><span style={{fontSize:'.72rem',color:'var(--muted)'}}>Variables: {'{cliente}'}, {'{barberia}'}, {'{fecha}'}, {'{hora}'}</span></div>
+            <div className="card-body">
+              {[
+                { key:'wp_msg_confirmacion', label:'✅ Confirmación', emoji:'✅' },
+                { key:'wp_msg_recordatorio', label:'🔔 Recordatorio', emoji:'🔔' },
+                { key:'wp_msg_cancelacion',  label:'❌ Cancelación',  emoji:'❌' },
+              ].map(m=>(
+                <div key={m.key} className="form-group">
+                  <label className="form-label">{m.label}</label>
+                  <textarea className="form-textarea" style={{minHeight:70}} value={form[m.key]} onChange={e=>setForm({...form,[m.key]:e.target.value})} />
+                  <div className="wp-preview">
+                    <div className="wp-preview-label">Preview</div>
+                    <div className="wp-bubble">
+                      <span dangerouslySetInnerHTML={{__html: previewMsg(form[m.key]).replace(/\*(.*?)\*/g,'<b>$1</b>').replace(/\n/g,'<br/>') }} />
+                      <div className="wp-bubble-time">{now()} ✓✓</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button className="btn btn-gold" style={{width:'100%',justifyContent:'center',padding:'12px'}} onClick={guardar} disabled={saving}>
+            {saving ? '⏳ Guardando...' : '💾 Guardar configuración WhatsApp'}
+          </button>
+        </div>
+      </div>
+
+      {/* LOGS */}
+      <div className="card">
+        <div className="card-header"><span className="card-title">📋 Historial de mensajes</span></div>
+        {loading ? <div style={{padding:20,textAlign:'center',color:'var(--muted)'}}>⏳ Cargando...</div> : (
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Hora</th><th>Cliente</th><th>Teléfono</th><th>Tipo</th><th>Estado</th><th>Mensaje</th></tr></thead>
+              <tbody>
+                {logs.length===0
+                  ? <tr><td colSpan={6}><div className="empty"><div className="empty-icon">💬</div><div>Sin mensajes aún</div></div></td></tr>
+                  : logs.map(l=>(
+                    <tr key={l.id}>
+                      <td style={{whiteSpace:'nowrap'}}>{l.enviado_en?.slice(11,16)}</td>
+                      <td>{l.clientes?.nombre||'—'}</td>
+                      <td style={{fontFamily:'monospace',fontSize:'.78rem'}}>{l.telefono}</td>
+                      <td><span className="badge badge-muted">{l.tipo}</span></td>
+                      <td>{l.estado==='enviado'?<span className="badge badge-green">✓ enviado</span>:<span className="badge badge-red">✗ error</span>}</td>
+                      <td style={{maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.mensaje?.slice(0,60)}...</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Modal mensaje manual */}
+      {modalManual && (
+        <Modal title="📤 Enviar mensaje manual" onClose={()=>setModalManual(false)} footer={
+          <><button className="btn btn-outline" onClick={()=>setModalManual(false)}>Cancelar</button>
+            <button className="btn btn-wp" onClick={enviarManual}>Enviar por WhatsApp</button></>
+        }>
+          <div className="form-group">
+            <label className="form-label">Teléfono (sin 0, sin 15, sin +54)</label>
+            <input className="form-input" value={manualTel} onChange={e=>setManualTel(e.target.value)} placeholder="Ej: 3415551234" />
+            <div className="form-hint">Argentina: 54 + número. Ej: 3415551234 → 543415551234</div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Mensaje</label>
+            <textarea className="form-textarea" value={manualMsg} onChange={e=>setManualMsg(e.target.value)} placeholder="Escribí el mensaje..." />
+            <div className="form-hint">Usá *texto* para negrita en WhatsApp.</div>
+          </div>
+          {manualMsg && (
+            <div className="wp-preview">
+              <div className="wp-preview-label">Preview</div>
+              <div className="wp-bubble">
+                <span dangerouslySetInnerHTML={{__html:manualMsg.replace(/\*(.*?)\*/g,'<b>$1</b>').replace(/\n/g,'<br/>')}}/>
+                <div className="wp-bubble-time">{now()} ✓✓</div>
+              </div>
+            </div>
+          )}
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+//  MÓDULO MERCADO PAGO
+// ══════════════════════════════════════════════════════════
+function MercadoPagoModule({ empresa, notify }) {
+  const client = getSB();
+  const [config, setConfig] = useState(null);
+  const [subs,   setSubs]   = useState([]);
+  const [pagos,  setPagos]  = useState([]);
+  const [loading,setLoading]= useState(true);
+  const [saving, setSaving] = useState(false);
+  const [modalPlan, setModalPlan] = useState(null);
+
+  const [form, setForm] = useState({
+    mp_access_token: '', mp_public_key: '',
+    mp_plan_id_basico: '', mp_plan_id_pro: '', mp_plan_id_premium: '',
+  });
+
+  const PLANES = [
+    { slug:'basico',   nombre:'Básico',  precio:8000,  features:['Turnos online','Hasta 2 barberos','Clientes'], featured:false },
+    { slug:'pro',      nombre:'Pro',     precio:14000, features:['Todo Básico','WhatsApp automático','Control de caja','Estadísticas','Hasta 5 barberos'], featured:true },
+    { slug:'premium',  nombre:'Premium', precio:22000, features:['Todo Pro','Multi-sede','Barberos ilimitados','Onboarding personal'], featured:false },
+  ];
+
+  const load = useCallback(async () => {
+    if (!client||!empresa) return;
+    const [cfg, s, p] = await Promise.all([
+      client.from('configuracion_empresa').select('*').eq('empresa_id',empresa.id).single(),
+      client.from('mp_suscripciones').select('*').eq('empresa_id',empresa.id).order('creado_en',{ascending:false}),
+      client.from('mp_pagos').select('*').eq('empresa_id',empresa.id).order('creado_en',{ascending:false}).limit(20),
+    ]);
+    if (cfg.data) { setConfig(cfg.data); setForm(f=>({...f,...cfg.data})); }
+    setSubs(s.data||[]); setPagos(p.data||[]); setLoading(false);
+  }, [client, empresa]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const guardar = async () => {
+    setSaving(true);
+    const data = { empresa_id:empresa?.id, ...form };
+    const { error } = config
+      ? await client.from('configuracion_empresa').update(data).eq('empresa_id',empresa.id)
+      : await client.from('configuracion_empresa').insert(data);
+    if (error) notify('Error: '+error.message,'error');
+    else { notify('Credenciales MP guardadas ✅','mp'); load(); }
+    setSaving(false);
+  };
+
+  // Generar link de suscripción en MP (Preferencia)
+  const generarLinkSuscripcion = async (plan) => {
+    if (!form.mp_access_token) { notify('Primero guardá tu Access Token de MP','error'); return; }
+    setModalPlan(plan);
+  };
+
+  const ingresos = pagos.filter(p=>p.estado==='approved').reduce((a,p)=>a+p.monto,0);
+  const subsActivas = subs.filter(s=>s.estado==='authorized').length;
+
+  const mpOK = form.mp_access_token && form.mp_public_key;
+
+  return (
+    <div className="fade-in">
+      {/* Hero */}
+      <div className="integration-hero hero-mp" style={{background:'linear-gradient(135deg,#0a1929,#0d2038)'}}>
+        <div className="integration-hero-icon">💳</div>
+        <div className="integration-hero-info">
+          <div className="integration-hero-title" style={{color:'var(--mp)'}}>Mercado Pago</div>
+          <div className="integration-hero-desc">Cobrá suscripciones mensuales automáticas en pesos. El acceso se activa solo al pagar.</div>
+          <div className={`status-badge ${mpOK?'sb-mp':'sb-inactive'}`}>
+            <span style={{width:6,height:6,borderRadius:'50%',background:mpOK?'var(--blue)':'var(--muted)',display:'inline-block'}}/>
+            {mpOK ? 'Conectado · MP Argentina' : 'Sin configurar'}
+          </div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid-3" style={{marginBottom:20}}>
+        <div className="stat-mini"><div className="stat-mini-label">Suscripciones activas</div><div className="stat-mini-val" style={{color:'var(--green)'}}>{subsActivas}</div></div>
+        <div className="stat-mini"><div className="stat-mini-label">Ingresos cobrados</div><div className="stat-mini-val" style={{color:'var(--gold)'}}>{fmt(ingresos)}</div></div>
+        <div className="stat-mini"><div className="stat-mini-label">Pagos registrados</div><div className="stat-mini-val">{pagos.length}</div></div>
+      </div>
+
+      <div className="grid-2">
+        {/* CONFIG */}
+        <div>
+          <div className="card">
+            <div className="card-header"><span className="card-title">🔑 Credenciales MP</span></div>
+            <div className="card-body">
+              <div className="step-list" style={{marginBottom:18}}>
+                <div className="step">
+                  <div className="step-num">1</div>
+                  <div className="step-body"><div className="step-title">Crear cuenta en Mercado Pago</div><div className="step-desc">Entrá a <a href="https://www.mercadopago.com.ar/developers" target="_blank">mercadopago.com.ar/developers</a> y creá tu cuenta como vendedor.</div></div>
+                </div>
+                <div className="step">
+                  <div className="step-num">2</div>
+                  <div className="step-body"><div className="step-title">Obtener credenciales</div><div className="step-desc">Tu cuenta MP → Configuración → Credenciales → <code>Access Token</code> y <code>Public Key</code> de Producción.</div></div>
+                </div>
+                <div className="step">
+                  <div className="step-num">3</div>
+                  <div className="step-body"><div className="step-title">Activar suscripciones</div><div className="step-desc">MP → Tu cuenta → Cobros → Suscripciones. Creá un plan por cada precio (Básico, Pro, Premium) y pegá los IDs abajo.</div></div>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Access Token (Producción)</label>
+                <input className="form-input" type="password" value={form.mp_access_token} onChange={e=>setForm({...form,mp_access_token:e.target.value})} placeholder="APP_USR-..." />
+                <div className="form-hint">Nunca lo compartas. Se usa solo en el servidor.</div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Public Key</label>
+                <input className="form-input" value={form.mp_public_key} onChange={e=>setForm({...form,mp_public_key:e.target.value})} placeholder="APP_USR-..." />
+              </div>
+
+              <div style={{borderTop:'1px solid var(--border)',paddingTop:14,marginTop:14}}>
+                <div style={{fontWeight:600,fontSize:'.82rem',marginBottom:12,color:'var(--muted2)'}}>IDs de planes en MP (opcional)</div>
+                {['basico','pro','premium'].map(p=>(
+                  <div className="form-group" key={p}>
+                    <label className="form-label">Plan {p.charAt(0).toUpperCase()+p.slice(1)}</label>
+                    <input className="form-input" value={form[`mp_plan_id_${p}`]} onChange={e=>setForm({...form,[`mp_plan_id_${p}`]:e.target.value})} placeholder={`ID del plan ${p} en MP`} />
+                  </div>
+                ))}
+              </div>
+
+              <button className="btn btn-gold" style={{width:'100%',justifyContent:'center',padding:'11px',marginTop:4}} onClick={guardar} disabled={saving}>
+                {saving ? '⏳ Guardando...' : '💾 Guardar credenciales MP'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* PLANES Y LINKS */}
+        <div>
+          <div className="card">
+            <div className="card-header"><span className="card-title">💰 Planes de suscripción</span></div>
+            <div className="card-body" style={{padding:'16px 20px'}}>
+              <div className="price-grid" style={{gridTemplateColumns:'1fr'}}>
+                {PLANES.map(plan=>(
+                  <div key={plan.slug} className={`price-card ${plan.featured?'featured':''}`} style={{textAlign:'left',padding:'18px'}}>
+                    {plan.featured && <div className="price-popular">MÁS ELEGIDO</div>}
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                      <div>
+                        <div className="price-name">{plan.nombre}</div>
+                        <div className="price-amount" style={{fontSize:'1.8rem'}}>{fmt(plan.precio)}<small>/mes</small></div>
+                      </div>
+                      <button className="btn btn-mp btn-sm" onClick={()=>generarLinkSuscripcion(plan)} disabled={!mpOK}>
+                        🔗 Generar link
+                      </button>
+                    </div>
+                    <ul className="price-features">
+                      {plan.features.map(f=><li key={f}>{f}</li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Webhook info */}
+          <div className="card">
+            <div className="card-header"><span className="card-title">🔔 Webhook MP (activación automática)</span></div>
+            <div className="card-body">
+              <div className="form-hint" style={{fontSize:'.8rem',lineHeight:1.6,color:'var(--muted2)'}}>
+                Para que el plan se active automáticamente al pagar, configurá el webhook en MP:<br/><br/>
+                <strong style={{color:'var(--white)'}}>MP → Configuración → Notificaciones</strong><br/>
+                URL del webhook:
+              </div>
+              <div style={{background:'var(--surface)',border:'1px solid var(--border2)',borderRadius:7,padding:'10px 13px',marginTop:10,fontFamily:'monospace',fontSize:'.78rem',color:'var(--gold-l)',wordBreak:'break-all'}}>
+                https://[TU-PROYECTO].supabase.co/functions/v1/mp-webhook
+              </div>
+              <div className="form-hint" style={{marginTop:8}}>
+                Este endpoint lo creás con una <a href="https://supabase.com/docs/guides/functions" target="_blank">Supabase Edge Function</a>. El código está en el archivo <strong>supabase-mp-webhook.js</strong>.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Historial de pagos */}
+      <div className="card">
+        <div className="card-header"><span className="card-title">📋 Historial de pagos</span></div>
+        {loading ? <div style={{padding:20,textAlign:'center',color:'var(--muted)'}}>⏳ Cargando...</div> : (
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Fecha</th><th>MP ID</th><th>Monto</th><th>Estado</th><th>Descripción</th></tr></thead>
+              <tbody>
+                {pagos.length===0
+                  ? <tr><td colSpan={5}><div className="empty"><div className="empty-icon">💳</div><div>Sin pagos registrados aún</div></div></td></tr>
+                  : pagos.map(p=>(
+                    <tr key={p.id}>
+                      <td>{p.fecha_pago?.slice(0,10)||p.creado_en?.slice(0,10)}</td>
+                      <td style={{fontFamily:'monospace',fontSize:'.75rem'}}>{p.mp_payment_id||'—'}</td>
+                      <td style={{fontFamily:'Bebas Neue',fontSize:'1rem',color:'var(--gold)'}}>{fmt(p.monto)}</td>
+                      <td>{p.estado==='approved'?<span className="badge badge-green">✓ aprobado</span>:p.estado==='rejected'?<span className="badge badge-red">✗ rechazado</span>:<span className="badge badge-amber">⏳ {p.estado}</span>}</td>
+                      <td>{p.descripcion||'Suscripción TurnosCut'}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Modal link de suscripción */}
+      {modalPlan && (
+        <Modal title={`🔗 Link de suscripción — ${modalPlan.nombre}`} onClose={()=>setModalPlan(null)}>
+          <div style={{marginBottom:16}}>
+            <div style={{fontWeight:600,fontSize:'1rem',marginBottom:4}}>Plan {modalPlan.nombre} — {fmt(modalPlan.precio)}/mes</div>
+            <div style={{fontSize:'.82rem',color:'var(--muted2)'}}>Este link lo mandás al barbero. Cuando paga, se activa su plan automáticamente.</div>
+          </div>
+
+          {form[`mp_plan_id_${modalPlan.slug}`] ? (
+            <>
+              <div style={{fontWeight:600,fontSize:'.82rem',marginBottom:8,color:'var(--muted2)'}}>Link de suscripción MP:</div>
+              <div style={{background:'var(--surface)',border:'1px solid var(--border2)',borderRadius:7,padding:'11px 14px',fontFamily:'monospace',fontSize:'.78rem',color:'var(--mp)',wordBreak:'break-all',marginBottom:14}}>
+                https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id={form[`mp_plan_id_${modalPlan.slug}`]}
+              </div>
+              <button className="btn btn-mp" style={{width:'100%',justifyContent:'center'}}
+                onClick={()=>{
+                  navigator.clipboard.writeText(`https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=${form[`mp_plan_id_${modalPlan.slug}`]}`);
+                  notify('Link copiado ✅','mp');
+                }}>
+                📋 Copiar link
+              </button>
+            </>
+          ) : (
+            <div style={{background:'var(--amber-bg)',border:'1px solid rgba(245,158,11,.2)',borderRadius:8,padding:'12px 14px',fontSize:'.82rem',color:'var(--amber)'}}>
+              ⚠️ Primero creá el plan en Mercado Pago y pegá el ID en la configuración arriba.
+            </div>
+          )}
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+//  APP PRINCIPAL
+// ══════════════════════════════════════════════════════════
+function App() {
+  const [page, setPage]       = useState('whatsapp');
+  const [empresa, setEmpresa] = useState(null);
+  const [notif, setNotif]     = useState(null);
+
+  const notify = useCallback((msg,type='success') => setNotif({msg,type,id:Date.now()}), []);
+
+  // Cargar empresa de Supabase
+  useEffect(() => {
+    const client = getSB();
+    if (!client) return;
+    client.auth.getSession().then(async ({ data }) => {
+      if (data.session?.user) {
+        const { data: emp } = await client.from('empresas').select('*').eq('owner_id',data.session.user.id).single();
+        if (emp) setEmpresa(emp);
+      }
+    });
+  }, []);
+
+  const nav = [
+    { id:'whatsapp', label:'WhatsApp', icon:'💬', status: getSB() ? 'gray' : 'gray' },
+    { id:'mercadopago', label:'Mercado Pago', icon:'💳', status:'gray' },
+  ];
+
+  if (!getSB()) return (
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:14,padding:24}}>
+      <div style={{fontFamily:'Bebas Neue',fontSize:'2rem',color:'var(--gold)'}}>Turnos<span style={{color:'var(--white)'}}>Cut</span></div>
+      <div style={{color:'var(--muted2)',fontSize:'.9rem',textAlign:'center',maxWidth:360}}>
+        Abrí primero el panel principal (<strong>turnoscut-supabase-app.html</strong>) para configurar la conexión con Supabase. Luego volvé a este archivo.
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="app">
+      <aside className="sidebar">
+        <div className="sidebar-logo">Turnos<span>Cut</span></div>
+        <nav className="nav">
+          <div className="nav-section">Integraciones</div>
+          {nav.map(n=>(
+            <button key={n.id} className={`nav-item ${page===n.id?'active':''}`} onClick={()=>setPage(n.id)}>
+              <span className="nav-icon">{n.icon}</span>
+              {n.label}
+            </button>
+          ))}
+          <div className="nav-section" style={{marginTop:16}}>App</div>
+          <button className="nav-item" onClick={()=>window.open('turnoscut-supabase-app.html')}>
+            <span className="nav-icon">📊</span>Volver al panel
+          </button>
+        </nav>
+        <div className="sidebar-footer">
+          {empresa ? `💈 ${empresa.nombre}` : 'Sin empresa'}
+        </div>
+      </aside>
+
+      <main className="main">
+        <div className="topbar">
+          <span className="topbar-title">{page==='whatsapp' ? '💬 WhatsApp Automático' : '💳 Mercado Pago'}</span>
+          <span style={{fontSize:'.78rem',color:'var(--muted2)'}}>Integraciones · TurnosCut</span>
+        </div>
+        <div className="content">
+          {page==='whatsapp'    && <WhatsAppModule    empresa={empresa} notify={notify} />}
+          {page==='mercadopago' && <MercadoPagoModule empresa={empresa} notify={notify} />}
+        </div>
+      </main>
+
+      {notif && <Notif key={notif.id} msg={notif.msg} type={notif.type} onClose={()=>setNotif(null)} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
