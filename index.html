@@ -354,27 +354,17 @@ function ConfigScreen({ onConnect }) {
 
   const connect = async () => {
     if (!url || !key) { setError('Completá los dos campos.'); return; }
-    const urlClean = url.trim().replace(/\/$/, '');
-    const keyClean = key.trim();
-    // Validación básica de formato
-    if (!urlClean.includes('supabase.co')) {
-      setError('La URL debe ser de Supabase (ej: https://xxxx.supabase.co)'); return;
-    }
-    if (keyClean.length < 100) {
-      setError('La Anon Key parece incompleta — copiá toda la clave desde Supabase.'); return;
-    }
     setLoading(true); setError('');
     try {
-      const sb = window.supabase.createClient(urlClean, keyClean);
-      // Verificar conectividad con un ping liviano (no requiere RLS)
-      const { error: e } = await sb.auth.getSession();
+      const sb = window.supabase.createClient(url.trim(), key.trim());
+      const { error: e } = await sb.from('planes').select('id').limit(1);
       if (e) throw new Error(e.message);
       supabase = sb;
-      localStorage.setItem('tc_url', urlClean);
-      localStorage.setItem('tc_key', keyClean);
+      localStorage.setItem('tc_url', url.trim());
+      localStorage.setItem('tc_key', key.trim());
       onConnect(sb);
     } catch(e) {
-      setError('Error: ' + (e.message || 'Verificá la URL y la clave API.'));
+      setError('No se pudo conectar. Verificá la URL y la clave API.');
     }
     setLoading(false);
   };
@@ -412,21 +402,16 @@ function ConfigScreen({ onConnect }) {
 
         <div className="form-group">
           <label className="form-label">Project URL</label>
-          <input className="form-input" placeholder="https://xxxx.supabase.co" value={url} onChange={e=>setUrl(e.target.value.trim())} autoComplete="off" spellCheck="false" />
-          <div style={{fontSize:'.72rem',color:'var(--muted)',marginTop:4}}>Ejemplo: https://sbhovvacbmurtnddufua.supabase.co</div>
+          <input className="form-input" placeholder="https://xxxx.supabase.co" value={url} onChange={e=>setUrl(e.target.value)} />
         </div>
         <div className="form-group">
           <label className="form-label">Anon Public Key</label>
-          <input className="form-input" placeholder="eyJhbGci..." value={key} onChange={e=>setKey(e.target.value.trim())} type="password" autoComplete="off" spellCheck="false" />
-          <div style={{fontSize:'.72rem',color:'var(--muted)',marginTop:4}}>Supabase → Settings → API → "anon public" (empieza con eyJ...)</div>
+          <input className="form-input" placeholder="eyJhbGci..." value={key} onChange={e=>setKey(e.target.value)} type="password" />
         </div>
         {error && <div className="form-error" style={{marginBottom:12}}>⚠️ {error}</div>}
         <button className="btn btn-gold" style={{width:'100%',justifyContent:'center',padding:'12px'}} onClick={connect} disabled={loading}>
           {loading ? '⏳ Conectando...' : '🚀 Conectar y entrar'}
         </button>
-        <div style={{marginTop:12,fontSize:'.72rem',color:'var(--muted)',lineHeight:1.6,textAlign:'center'}}>
-          ¿Error de conexión? Asegurate de copiar la clave <strong style={{color:'var(--white)'}}>completa</strong> desde Supabase — es muy larga (más de 200 caracteres).
-        </div>
       </div>
     </div>
   );
